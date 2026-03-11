@@ -8,8 +8,7 @@ import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 import { clusterApiUrl } from '@solana/web3.js';
 
 export function WalletContextProvider({ children }: { children: React.ReactNode }) {
-  // Devnet only
-  const network = WalletAdapterNetwork.Devnet;
+  const network = WalletAdapterNetwork.Mainnet;
   const endpoint = useMemo(
     () => process.env.NEXT_PUBLIC_SOLANA_RPC_URL || clusterApiUrl(network),
     [network]

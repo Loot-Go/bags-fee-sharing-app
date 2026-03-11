@@ -2,8 +2,8 @@
 // All process.env vars are server-only (not prefixed with NEXT_PUBLIC_)
 
 export const config = {
-  solanaRpcUrl: process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com',
-  solanaNetwork: 'devnet' as const,
+  solanaRpcUrl: process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com',
+  solanaNetwork: 'mainnet-beta' as const,
   platformWallet: process.env.PLATFORM_WALLET_ADDRESS || '',
   platformWalletPrivateKey: process.env.PLATFORM_WALLET_PRIVATE_KEY || '',
   bagsApiKey: process.env.BAGS_API_KEY || '',
