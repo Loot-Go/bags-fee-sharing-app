@@ -11,6 +11,7 @@ import { getPool } from '@/lib/db/pool'
 const pool = getPool();
 import { bagsApi } from '@/lib/services/bagsApi';
 import { config } from '@/lib/config';
+import { notifyNewClaim, notifyClaimError } from '@/lib/services/slackNotifier';
 
 const failureCounters: Map<string, number> = new Map();
 
@@ -38,8 +39,10 @@ async function claimFeesForProject(project: {
   id: string;
   token_address: string;
   fee_share_pct: number;
+  project_name?: string;
+  project_logo?: string;
 }): Promise<void> {
-  const { id: projectId, token_address: tokenMint } = project;
+  const { id: projectId, token_address: tokenMint, project_name: projectName } = project;
 
   try {
     console.log(`[FeeClaimService] Checking claimable fees for: ${tokenMint}`);
@@ -76,6 +79,16 @@ async function claimFeesForProject(project: {
     console.log(`[FeeClaimService] ✅ Claim recorded for ${tokenMint} (${estimatedSol} SOL, pending approval)`);
     failureCounters.set(tokenMint, 0);
 
+    // Slack alert
+    await notifyNewClaim({
+      projectName: projectName || tokenMint,
+      tokenAddress: tokenMint,
+      solAmount: estimatedSol,
+      platformFee,
+      playerAmount,
+      txHash,
+    });
+
   } catch (err: unknown) {
     const errMsg = err instanceof Error ? err.message : String(err);
     console.error(`[FeeClaimService] ❌ Failed for ${tokenMint}: ${errMsg}`);
@@ -85,7 +98,7 @@ async function claimFeesForProject(project: {
 
     if (failures >= config.maxConsecutiveFailures) {
       console.error(`[ALERT] 🚨 ${failures} consecutive claim failures for ${tokenMint}. Last error: ${errMsg}`);
-      // TODO: Send to Slack webhook
+      await notifyClaimError(tokenMint, errMsg, failures);
     }
   }
 }
