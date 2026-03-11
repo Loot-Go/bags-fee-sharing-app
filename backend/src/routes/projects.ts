@@ -6,7 +6,7 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { supabase } from '../db/supabase';
+import { pool } from '../db/db';
 import { bagsApi } from '../services/bagsApi';
 import { config } from '../config';
 
@@ -33,70 +33,55 @@ router.post('/', async (req: Request, res: Response) => {
 
   try {
     // 1. Update fee share config on Bags to add LootGO as co-creator
-    //    Endpoint: POST /fee-share-admin-update-config
-    //    LootGO platform wallet gets feeSharePct% of trading fees
-    const basisPoints = feeSharePct * 100;  // e.g. 20% = 2000 bps
-    
-    // TODO: In production, fetch existing claimers first and merge
-    // For MVP, we set LootGO as the sole fee claimer at feeSharePct%
-    // (remaining fees go to project via Bags default routing)
+    const basisPoints = feeSharePct * 100;
     await bagsApi.updateFeeShareConfig(tokenAddress, creatorWallet, [
       { wallet: config.platformWallet, basisPoints },
     ]);
 
     // 2. Save project to DB
-    const { data: project, error } = await supabase
-      .from('projects')
-      .insert({
-        token_address: tokenAddress,
-        creator_wallet: creatorWallet,
-        fee_share_pct: feeSharePct,
-        project_name: projectName,
-        project_logo: projectLogo,
-        project_description: projectDescription,
-        geo_config: geoConfig || { targeting: 'global' },
-      })
-      .select()
-      .single();
+    const result = await pool.query(
+      `INSERT INTO projects (token_address, creator_wallet, fee_share_pct, project_name, project_logo, project_description, geo_config)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING *`,
+      [tokenAddress, creatorWallet, feeSharePct, projectName, projectLogo, projectDescription,
+       JSON.stringify(geoConfig || { targeting: 'global' })]
+    );
 
-    if (error) {
-      if (error.code === '23505') {
-        return res.status(409).json({ error: 'Token already registered' });
-      }
-      throw error;
+    return res.status(201).json({ success: true, project: result.rows[0] });
+
+  } catch (err: any) {
+    if (err.code === '23505') {
+      return res.status(409).json({ error: 'Token already registered' });
     }
-
-    return res.status(201).json({ success: true, project });
-
-  } catch (err: unknown) {
-    const errMsg = err instanceof Error ? err.message : String(err);
-    console.error('[Projects] POST error:', errMsg);
-    return res.status(500).json({ error: errMsg });
+    console.error('[Projects] POST error:', err.message);
+    return res.status(500).json({ error: err.message });
   }
 });
 
 // GET /api/projects — List all projects with stats
 router.get('/', async (_req: Request, res: Response) => {
-  const { data, error } = await supabase
-    .from('project_stats')
-    .select('*')
-    .order('total_sol_claimed', { ascending: false });
-
-  if (error) return res.status(500).json({ error: error.message });
-  return res.json(data);
+  try {
+    const result = await pool.query(
+      `SELECT * FROM project_stats ORDER BY total_sol_claimed DESC`
+    );
+    return res.json(result.rows);
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
 });
 
 // GET /api/projects/:id — Get single project stats
 router.get('/:id', async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const { data, error } = await supabase
-    .from('project_stats')
-    .select('*')
-    .eq('project_id', id)
-    .single();
-
-  if (error) return res.status(404).json({ error: 'Project not found' });
-  return res.json(data);
+  try {
+    const result = await pool.query(
+      `SELECT * FROM project_stats WHERE project_id = $1`,
+      [req.params.id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Project not found' });
+    return res.json(result.rows[0]);
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
 });
 
 export default router;

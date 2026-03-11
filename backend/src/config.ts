@@ -18,9 +18,8 @@ export const config = {
   bagsApiKey: process.env.BAGS_API_KEY || '',
   bagsApiBaseUrl: process.env.BAGS_API_BASE_URL || 'https://public-api-v2.bags.fm/api/v1',
   
-  // Supabase
-  supabaseUrl: process.env.SUPABASE_URL || '',
-  supabaseServiceKey: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
+  // AWS RDS / PostgreSQL
+  databaseUrl: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/lootgo',
   
   // Fee split percentages (of LootGO's co-creator share)
   // e.g. if LootGO has 20% co-creator fee:
