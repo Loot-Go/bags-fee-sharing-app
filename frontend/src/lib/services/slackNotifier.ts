@@ -46,13 +46,13 @@ export async function notifyNewClaim(alert: NewClaimAlert): Promise<void> {
   const mcapStr = mcap ? `$${(mcap / 1_000_000).toFixed(2)}M` : 'N/A';
 
   const message = {
-    text: `🎯 *New Fee Claim — ${projectName}${ticker ? ` ($${ticker})` : ''}*`,
+    text: `🚨🚨 New Fee Claim — ${projectName}${ticker ? ` ($${ticker})` : ''}`,
     blocks: [
       {
         type: 'header',
         text: {
           type: 'plain_text',
-          text: `🎯 New Fee Claim — ${projectName}${ticker ? ` ($${ticker})` : ''}`,
+          text: `🚨🚨 New Fee Claim — ${projectName}${ticker ? ` ($${ticker})` : ''}`,
         },
       },
       {
