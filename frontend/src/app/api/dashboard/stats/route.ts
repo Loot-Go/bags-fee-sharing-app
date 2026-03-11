@@ -15,18 +15,18 @@ export async function GET() {
     const buybacks = buybacksRes.rows;
     const distributions = distributionsRes.rows;
 
-    const totalSolClaimed = claims.reduce((s, c) => s + parseFloat(c.sol_amount), 0);
+    const totalSolClaimed = claims.reduce((s: number, c: any) => s + parseFloat(c.sol_amount), 0);
     const solPriceUsd = 150;
 
     return NextResponse.json({
       totalSolClaimed,
       totalSolClaimedUsd: totalSolClaimed * solPriceUsd,
-      totalPlatformFee: claims.reduce((s, c) => s + parseFloat(c.platform_fee), 0),
-      totalPlayerAmount: claims.reduce((s, c) => s + parseFloat(c.player_amount), 0),
-      totalBuybackVolSol: buybacks.reduce((s, b) => s + parseFloat(b.sol_spent), 0),
-      totalTokensBought: buybacks.reduce((s, b) => s + parseFloat(b.token_amount), 0),
-      totalBoxesCreated: distributions.reduce((s, d) => s + (d.boxes_created || 0), 0),
-      totalTokensDistributed: distributions.reduce((s, d) => s + parseFloat(d.tokens_distributed || 0), 0),
+      totalPlatformFee: claims.reduce((s: number, c: any) => s + parseFloat(c.platform_fee), 0),
+      totalPlayerAmount: claims.reduce((s: number, c: any) => s + parseFloat(c.player_amount), 0),
+      totalBuybackVolSol: buybacks.reduce((s: number, b: any) => s + parseFloat(b.sol_spent), 0),
+      totalTokensBought: buybacks.reduce((s: number, b: any) => s + parseFloat(b.token_amount), 0),
+      totalBoxesCreated: distributions.reduce((s: number, d: any) => s + (d.boxes_created || 0), 0),
+      totalTokensDistributed: distributions.reduce((s: number, d: any) => s + parseFloat(d.tokens_distributed || 0), 0),
       pendingApprovals: parseInt(pendingRes.rows[0].count),
       uniquePlayersReached: null,
       activeBoxesCount: null,
